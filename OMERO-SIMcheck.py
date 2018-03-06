@@ -3,7 +3,7 @@ from os import path
 
 from OMERO_toolbox import open_image_plus
 from OMERO_toolbox import omero_connect
-from OMERO_toolbox import get_image_name_id_dict
+from OMERO_toolbox import get_image_properties
 from OMERO_toolbox import add_images_key_values
 from OMERO_toolbox import upload_image
 
@@ -119,7 +119,7 @@ def main_function():
     gateway = omero_connect(omero_server, omero_port, user_name, user_pw)
 
     # Get Images IDs and names
-    images_dict = get_image_name_id_dict(gateway, dataset_id)
+    images_dict = get_image_properties(gateway, dataset_id)
 
     images = [(name, images_dict[name]) for name in images_dict]
 
