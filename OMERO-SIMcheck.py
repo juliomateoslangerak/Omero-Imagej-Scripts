@@ -1,5 +1,5 @@
 from operator import itemgetter
-from os import path
+import os
 
 from OMERO_toolbox import open_image_plus
 from OMERO_toolbox import omero_connect
@@ -114,6 +114,10 @@ def fourier_plots(image_title):
 
 
 def main_function():
+    # Clean up
+    IJ.run("Close All")
+    IJ.selectWindow("Log")
+    IJ.run("Close")
 
     # Connect to OMERO
     gateway = omero_connect(omero_server, omero_port, user_name, user_pw)
@@ -121,40 +125,32 @@ def main_function():
     # Get Images IDs and names
     images_dict = get_image_properties(gateway, dataset_id)
 
-    images = [(name, images_dict[name]) for name in images_dict]
+    images = [(images_dict[id]['name'], id) for id in images_dict]
 
     # Sort and get image names
     images.sort(key=itemgetter(0))
-
+    
     # We are assuming here a standard OMX naming pattern for raw and sim images
-    sim_image_names = [i[0] for i in images if i[0].endswith(sim_subfix)]
-    raw_image_names = [i.rstrip(sim_subfix) + raw_subfix  for i in sim_image_names]
+    sim_images = [i[0] for i in images if i[0].endswith(sim_subfix)]
+    raw_images = [i.rstrip(sim_subfix) + raw_subfix for i in sim_images]
+    sim_images_ids = [i for i in images if i[0] in sim_images]
+    raw_images_ids = [i for i in images if i[0] in raw_images]
 
-    image_sets_to_analize = []
-
-    for i in range(len(sim_image_names)):
-        try:
-            image_sets_to_analize.append((raw_image_names[i],
-                                          images_dict[raw_image_names[i]],
-                                          sim_image_names[i],
-                                          images_dict[sim_image_names[i]]))
-        except KeyError:
-            print("Some of the images do not have a raw-sim correspondance")
-            gateway.disconnect()
-            print("Script has been aborted")
-            return
-
+    if len(sim_images_ids) != len(raw_images_ids):
+        print("Some of the images do not have a raw-sim correspondance")
+        gateway.disconnect()
+        print("Script has been aborted")
+        return
 
     # Iterate through the list of images to analyze
-    for image_set in image_sets_to_analize:
+    for i in range(len(sim_images_ids)):
+        raw_image_title = raw_images_ids[i][0]
+        raw_image_id = raw_images_ids[i][1]
+        sim_image_title = sim_images_ids[i][0]
+        sim_image_id = sim_images_ids[i][1]
 
-        raw_image_title = image_set[0]
-        raw_image_id = image_set[1]
-        sim_image_title = image_set[2]
-        sim_image_id = image_set[3]
-
-        print("Analyzing RAW image: " + raw_image_title)
-        print("Analyzing SIM image: " + sim_image_title)
+        print("Analyzing RAW image: " + raw_image_title + " with id: " + str(raw_image_id))
+        print("Analyzing SIM image: " + sim_image_title + " with id: " + str(sim_image_id))
 
         # open the raw and sim images
         open_image_plus(omero_server,user_name,user_pw,group_id,raw_image_id)
@@ -194,14 +190,17 @@ def main_function():
         add_images_key_values(gateway, sim_image_measurements, sim_image_id, "SIMcheck")
 
         for output_image in output_images:
+        
 
-            image_path = path.join(temp_path, (output_image.getTitle() + '.ome.tiff'))
+            image_title = output_image.getTitle() + ".ome.tiff"
+            image_path = os.path.join(str(temp_path), image_title)
+            print(image_path)
             IJ.run(output_image, 'Bio-Formats Exporter', 'save=' + image_path + ' export compression=Uncompressed')
             output_image.changes = False
             output_image.close()
             # Upload image to OMERO
             str2d = java.lang.reflect.Array.newInstance(java.lang.String,[1])
-            str2d [0] = image_path
+            str2d[0] = image_path
             print('Importing image: ' + output_image.getTitle())
             success = upload_image(gateway, str2d, omero_server, dataset_id)
             print('Success: ' + str(success))
@@ -218,9 +217,9 @@ def main_function():
 #@string(label="Server", value="omero.mri.cnrs.fr", persist=true) omero_server
 #@int(label="Port", value="4064", persist=true) omero_port
 #@string(label="Username", persist=true) user_name
-#@string(label="Password", persist=false) user_pw
+#@string(label="Password", persist=true) user_pw
 
-# get teh path for a temporary directory to store files
+# get the path for a temporary directory to store files
 #@File(label="Select a temporary directory", style="directory") temp_path
 
 # get Dataset id

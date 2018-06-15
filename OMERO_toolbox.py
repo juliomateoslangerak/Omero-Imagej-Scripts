@@ -111,7 +111,16 @@ def get_image_ids(gateway, dataset_id):
 
 
 def get_image_properties(gateway, dataset_id):
-    """Returns a dictionary with image Name: image ID under a Project/Dataset"""
+    """Returns a dictionary of dictionaries in the form:
+    {long:{'name': str,
+           'acquisition_date': ,
+           'description': str,
+           'fileset_id': ,
+           'index': ,
+           'instrument_id': ,
+           'file_path': str,}
+    under the specified Dataset
+    """
 
     browser = _get_images_browser(gateway, dataset_id)
     image_properties = {}
