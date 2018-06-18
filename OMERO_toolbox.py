@@ -143,7 +143,10 @@ def upload_image(gateway, path, host, dataset_id):
     user = gateway.getLoggedInUser()
     ctx = SecurityContext(user.getGroupId())
     session_key = gateway.getSessionId(user)
-
+    
+    str2d = Array.newInstance(String,[1])
+    str2d[0] = path
+    
     config = ImportConfig()
 
     config.email.set("")
@@ -165,8 +168,9 @@ def upload_image(gateway, path, host, dataset_id):
     error_handler = ErrorHandler(config)
 
     library.addObserver(LoggingImportMonitor())
-    candidates = ImportCandidates (reader, path, error_handler)
+    candidates = ImportCandidates(reader, str2d, error_handler)
     reader.setMetadataOptions(DefaultMetadataOptions(MetadataLevel.ALL))
+    print('Importing image: ' + str2d[0])
     success = library.importCandidates(config, candidates)
     return success
 

@@ -1,5 +1,8 @@
 from operator import itemgetter
 import os
+from java.lang.reflect import Array
+from java.lang import String
+
 
 from OMERO_toolbox import open_image_plus
 from OMERO_toolbox import omero_connect
@@ -105,9 +108,12 @@ def fourier_plots(image_title):
 
     IJ.selectWindow(image_title.rsplit('.', 1)[0] + '_FTL')
     ftl_imp = IJ.getImage()
-    IJ.run("To ROI Manager")
+    
+    # IJ.run("To ROI Manager")
+    # TODO: add ROIs to fourier plots
 
     IJ.selectWindow(image_title.rsplit('.', 1)[0] + '_FTR')
+    # TODO: convert to RGB
     ftr_imp = IJ.getImage()
 
     return [ftl_imp, ftr_imp]
@@ -116,8 +122,9 @@ def fourier_plots(image_title):
 def main_function():
     # Clean up
     IJ.run("Close All")
-    IJ.selectWindow("Log")
-    IJ.run("Close")
+    # TODO: condition closing or reseting log window to the fact that it is open
+    # IJ.selectWindow("Log")
+    # IJ.run("Close")
 
     # Connect to OMERO
     gateway = omero_connect(omero_server, omero_port, user_name, user_pw)
@@ -191,19 +198,13 @@ def main_function():
 
         for output_image in output_images:
         
-
             image_title = output_image.getTitle() + ".ome.tiff"
             image_path = os.path.join(str(temp_path), image_title)
-            print(image_path)
             IJ.run(output_image, 'Bio-Formats Exporter', 'save=' + image_path + ' export compression=Uncompressed')
             output_image.changes = False
             output_image.close()
             # Upload image to OMERO
-            str2d = java.lang.reflect.Array.newInstance(java.lang.String,[1])
-            str2d[0] = image_path
-            print('Importing image: ' + output_image.getTitle())
-            success = upload_image(gateway, str2d, omero_server, dataset_id)
-            print('Success: ' + str(success))
+            print('Success: ' + str(upload_image(gateway, image_path, omero_server, dataset_id)))
 
         # Clean up
         IJ.run("Close All")
@@ -215,9 +216,9 @@ def main_function():
 
 # get OMERO credentials
 #@string(label="Server", value="omero.mri.cnrs.fr", persist=true) omero_server
-#@int(label="Port", value="4064", persist=true) omero_port
+#@int(label="Port", value=4064, persist=true) omero_port
 #@string(label="Username", persist=true) user_name
-#@string(label="Password", persist=true) user_pw
+#@string(label="Password", persist=false) user_pw
 
 # get the path for a temporary directory to store files
 #@File(label="Select a temporary directory", style="directory") temp_path
@@ -229,13 +230,13 @@ def main_function():
 #@string(value='.dv') raw_subfix
 #@string(value='_SIR.dv') sim_subfix
 
-#@boolean(label='Do channel intensity profiles', value=true) do_channel_intensity_profiles
-#@boolean(label='Do fourier projections', value=true) do_fourier_projections
-#@boolean(label='Do motion illumination variation', value=true) do_motion_illumination_variation
-#@boolean(label='Do modulation contrast', value=true) do_modulation_contrast
-#@boolean(label='Do modulation contrast map', value=true) do_modulation_contrast_map
-#@boolean(label='Do channel intensity histogram', value=true) do_intensity_histogram
-#@boolean(label='Do fourier plots', value=true) do_fourier_plots
+#@boolean(label='Do channel intensity profiles', value=true, persist=true) do_channel_intensity_profiles
+#@boolean(label='Do fourier projections', value=true, persist=true) do_fourier_projections
+#@boolean(label='Do motion illumination variation', value=true, persist=true) do_motion_illumination_variation
+#@boolean(label='Do modulation contrast', value=true, persist=true) do_modulation_contrast
+#@boolean(label='Do modulation contrast map', value=true, persist=true) do_modulation_contrast_map
+#@boolean(label='Do channel intensity histogram', value=true, persist=true) do_intensity_histogram
+#@boolean(label='Do fourier plots', value=true, persist=true) do_fourier_plots
 
 
 main_function()
