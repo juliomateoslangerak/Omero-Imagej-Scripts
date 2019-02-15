@@ -215,7 +215,7 @@ def main_function():
     return gateway.disconnect()
 
 # get OMERO credentials
-#@string(label="Server", value="omero.mri.cnrs.fr", persist=true) omero_server
+#@string(label="Server", value="omero1.bioch.ox.ac.uk", persist=true) omero_server
 #@int(label="Port", value=4064, persist=true) omero_port
 #@string(label="Username", persist=true) user_name
 #@string(label="Password", persist=false) user_pw
