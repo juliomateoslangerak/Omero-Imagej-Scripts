@@ -139,7 +139,7 @@ def main_function():
     
     # We are assuming here a standard OMX naming pattern for raw and sim images
     sim_images = [i[0] for i in images if i[0].endswith(sim_subfix)]
-    raw_images = [i.rstrip(sim_subfix) + raw_subfix for i in sim_images]
+    raw_images = [i[:-len(sim_subfix)] + raw_subfix for i in sim_images]
     sim_images_ids = [i for i in images if i[0] in sim_images]
     raw_images_ids = [i for i in images if i[0] in raw_images]
 
