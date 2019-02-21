@@ -130,7 +130,7 @@ def main_function():
     gateway = omero_connect(omero_server, omero_port, user_name, user_pw)
 
     # Get Images IDs and names
-    images_dict = get_image_properties(gateway, dataset_id)
+    images_dict = get_image_properties(gateway, dataset_id, group_id)
 
     images = [(images_dict[id]['name'], id) for id in images_dict]
 
@@ -139,7 +139,7 @@ def main_function():
     
     # We are assuming here a standard OMX naming pattern for raw and sim images
     sim_images = [i[0] for i in images if i[0].endswith(sim_subfix)]
-    raw_images = [i[:-len(sim_subfix)] + raw_subfix for i in sim_images]
+    raw_images = [i.rstrip(sim_subfix) + raw_subfix for i in sim_images]
     sim_images_ids = [i for i in images if i[0] in sim_images]
     raw_images_ids = [i for i in images if i[0] in raw_images]
 
@@ -215,7 +215,7 @@ def main_function():
     return gateway.disconnect()
 
 # get OMERO credentials
-#@string(label="Server", value="omero1.bioch.ox.ac.uk", persist=true) omero_server
+#@string(label="Server", value="omero.mri.cnrs.fr", persist=true) omero_server
 #@int(label="Port", value=4064, persist=true) omero_port
 #@string(label="Username", persist=true) user_name
 #@string(label="Password", persist=false) user_pw
