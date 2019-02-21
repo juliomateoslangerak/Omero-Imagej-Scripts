@@ -175,10 +175,10 @@ def upload_image(gateway, path, host, dataset_id):
     return success
 
 
-def _data_manager_generator(gateway):
+def _data_manager_generator(gateway, group_id):
     data_manager = gateway.getFacility(DataManagerFacility)
     user = gateway.getLoggedInUser()
-    ctx = SecurityContext(user.getGroupId())
+    ctx = SecurityContext(group_id)
 
     return data_manager, ctx
 
@@ -196,11 +196,11 @@ def _dict_to_map_annotation(dictionary, description=None):
     return map_data
 
 
-def add_projects_key_values(gateway, key_values, project_ids, description=None):
+def add_projects_key_values(gateway, key_values, project_ids, group_id, description=None):
     """Adds some key:value pairs to a list of images"""
     map_data = _dict_to_map_annotation(key_values, description)
 
-    data_manager, ctx = _data_manager_generator(gateway)
+    data_manager, ctx = _data_manager_generator(gateway, group_id)
 
     # Link the data to the image
     if not hasattr(project_ids, '__iter__'):
@@ -212,11 +212,11 @@ def add_projects_key_values(gateway, key_values, project_ids, description=None):
         data_manager.saveAndReturnObject(ctx, link)
 
 
-def add_datasets_key_values(gateway, key_values, dataset_ids, description=None):
+def add_datasets_key_values(gateway, key_values, dataset_ids, group_id, description=None):
     """Adds some key:value pairs to a list of images"""
     map_data = _dict_to_map_annotation(key_values, description)
 
-    data_manager, ctx = _data_manager_generator(gateway)
+    data_manager, ctx = _data_manager_generator(gateway, group_id)
 
     # Link the data to the image
     if not hasattr(dataset_ids, '__iter__'):
@@ -228,11 +228,11 @@ def add_datasets_key_values(gateway, key_values, dataset_ids, description=None):
         data_manager.saveAndReturnObject(ctx, link)
 
 
-def add_images_key_values(gateway, key_values, image_ids, description=None):
+def add_images_key_values(gateway, key_values, image_ids, group_id, description=None):
     """Adds some key:value pairs to a list of images"""
     map_data = _dict_to_map_annotation(key_values, description)
 
-    data_manager, ctx = _data_manager_generator(gateway)
+    data_manager, ctx = _data_manager_generator(gateway, group_id)
 
     # Link the data to the image
     if not hasattr(image_ids, '__iter__'):
