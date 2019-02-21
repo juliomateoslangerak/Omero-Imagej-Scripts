@@ -91,10 +91,10 @@ def omero_connect(host, port, user_name, user_password):
     return gateway
 
 
-def _get_images_browser(gateway, dataset_id):
+def _get_images_browser(gateway, dataset_id, group_id):
     browse = gateway.getFacility(BrowseFacility)
     user = gateway.getLoggedInUser()
-    ctx = SecurityContext(user.getGroupId())
+    ctx = SecurityContext(group_id)
     ids = ArrayList(1)
     val = Long(dataset_id)
     ids.add(val)
@@ -110,7 +110,7 @@ def get_image_ids(gateway, dataset_id):
     return image_ids
 
 
-def get_image_properties(gateway, dataset_id):
+def get_image_properties(gateway, dataset_id, group_id):
     """Returns a dictionary of dictionaries in the form:
     {long:{'name': str,
            'acquisition_date': ,
@@ -122,7 +122,7 @@ def get_image_properties(gateway, dataset_id):
     under the specified Dataset
     """
 
-    browser = _get_images_browser(gateway, dataset_id)
+    browser = _get_images_browser(gateway, dataset_id, group_id)
     image_properties = {}
     for image in browser:
         image_id = image.getId()
