@@ -236,9 +236,11 @@ def main_function():
                 sim_imp = IJ.getImage()
             output_images += fourier_plots(sim_image_title)
 
-        add_images_key_values(gateway, raw_image_measurements, raw_image_id,
+        if raw_image_measurements:
+            add_images_key_values(gateway, raw_image_measurements, raw_image_id,
                               group_id, "SIMcheck")
-        add_images_key_values(gateway, sim_image_measurements, sim_image_id,
+        if sim_image_measurements:
+            add_images_key_values(gateway, sim_image_measurements, sim_image_id,
                               group_id, "SIMcheck")
 
         for output_image in output_images:
