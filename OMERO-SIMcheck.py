@@ -163,12 +163,15 @@ def main_function():
         # the relevant image later
         raw_imp = None
         sim_imp = None
+        log_window = None
         raw_image_measurements = {}
         sim_image_measurements = {}
         output_images = []
+
         if (do_channel_intensity_profiles and
                  not ((raw_image_title.rsplit('.', 1)[0] + '_CIP.ome.tiff') in
                       map(lambda x: x[0], images))):
+            
             if raw_imp is None :
                 open_image_plus(omero_server,user_name,user_pw,
                                 group_id,raw_image_id)
@@ -176,6 +179,7 @@ def main_function():
                 raw_imp = IJ.getImage()
             output, measurement = channel_intensity_profiles(raw_image_title)
             raw_image_measurements.update(measurement)
+            log_window = True
             output_images += output
 
         if (do_fourier_projections and
@@ -199,7 +203,7 @@ def main_function():
             output_images += motion_illumination_variation(raw_image_title)
 
         if ((do_modulation_contrast or do_modulation_contrast_map) and
-            not ((raw_image_title.rsplit('.', 1)[0] + '_MCM.ome.tiff') in
+            not ((raw_image_title.rsplit('.', 1)[0] + '_MCN.ome.tiff') in
                       map(lambda x: x[0], images))):
             if raw_imp is None :
                 open_image_plus(omero_server,user_name,user_pw,
@@ -215,6 +219,7 @@ def main_function():
                                                       sim_image_title,
                                                       do_modulation_contrast_map)
             raw_image_measurements.update(measurement)
+            log_window = True
             output_images += output
 
         if do_intensity_histogram:
@@ -224,6 +229,7 @@ def main_function():
                 IJ.selectWindow(sim_image_title)
                 sim_imp = IJ.getImage()
             measurement = intensity_histogram(sim_image_title)
+            log_window = True
             sim_image_measurements.update(measurement)
 
         if (do_fourier_plots and 
@@ -253,10 +259,13 @@ def main_function():
             # Upload image to OMERO
             print('Success: ' + str(upload_image(gateway, image_path, omero_server, dataset_id)))
 
-        # Clean up
-        IJ.run("Close All")
-        IJ.selectWindow("Log")
-        IJ.run("Close")
+        # Clean up close widnows that have been opened 
+        if sim_imp or raw_imp:
+            IJ.run("Close All")
+        #close log window if it exists
+        if log_window:
+            IJ.selectWindow("Log")
+            IJ.run("Close")
 
     print("Done")
     return gateway.disconnect()
