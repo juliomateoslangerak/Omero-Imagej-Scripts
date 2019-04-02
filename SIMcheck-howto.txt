@@ -1,0 +1,76 @@
+From: Ian Dobbie <ian.dobbie@bioch.ox.ac.uk>
+Subject: How to run OMERO SIMcheck script
+To: Lothar Schermelleh <lothar.schermelleh@bioch.ox.ac.uk>
+CC: David Susano Pinto <david.pinto@bioch.ox.ac.uk>,
+    Andrew Jefferson <andrew.jefferson@bioch.ox.ac.uk>,
+    Nadia Halidi <nadia.halidi@bioch.ox.ac.uk>
+Date: Fri, 15 Feb 2019 11:59:10 +0000 (5 weeks, 5 days, 22 hours ago)
+
+Hi Lothar,
+
+here are my notes...
+
+Good luck!
+
+Ian
+
+
+Quick guide into how I setup the OMERO SIMcheck scripts.
+
+All the files mentioned below are on
+micron1:/micronadmin/SIMcheck_macros/Omero_imagej-Scripts
+
+
+1) Install the OMERO IJ plugin
+--------------------
+Copy the contents of OMERO.insight-ij-5.4.10-ice36-b105 into the Fiji
+plugins directory.
+
+2) Install omero_client.jar
+--------------------
+This needs to go into the Fiji jars directory.
+
+3) Install the OMERO_toolbox.py script.
+--------------------
+I installed this into the Fiji jars/Lib folder which is on the script
+path and didn't exist on my machine. I created it and copied the
+python script there.
+
+4) Get the OMERO-SIMcheck.py
+--------------------
+Copy the python script to somewhere useful on your machine. You will
+need to be able to open it from the Fiji file menu so maybe in your
+home directory or similar.
+
+5) Start Fiji
+
+6) open the script OMERO-SIMcheck.py from the Fiji file menu. It
+should open in the script editor.
+
+7) Run the script
+--------------------
+run button is in the bottom left corner of the script editor window
+
+8)Fill in dialog
+--------------------
+Server: omero1.bioch.ox.ac.uk
+Port: 4064
+username/password for your OMERO account
+
+you must create and point to a temporary directory for the data to be
+downloaded to and processed in.
+
+Dataset ID can be got from the OMERO webclient by selecting the
+dataset you want to process and looking at the top of the right hand
+panel for the Dataset ID my test dataset is 19727
+
+GroupID is the a number you need to know. Micron is 4 if you need
+other group numbers I can show you how to find them.
+
+Raw and sim_subfix are the file endings you have used, the defaults for
+OMX data are .dv and _SIR.dv
+
+The select all the tests you want to run. My tests crashed on the
+modulation contrast map but that may be due to my data or my machine
+running out of memory. 
+
