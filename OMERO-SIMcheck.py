@@ -159,43 +159,94 @@ def main_function():
         print("Analyzing RAW image: " + raw_image_title + " with id: " + str(raw_image_id))
         print("Analyzing SIM image: " + sim_image_title + " with id: " + str(sim_image_id))
 
-        # open the raw and sim images
-        open_image_plus(omero_server,user_name,user_pw,group_id,raw_image_id)
-        IJ.selectWindow(raw_image_title)
-        raw_imp = IJ.getImage()
-        open_image_plus(omero_server,user_name,user_pw,group_id,sim_image_id)
-        IJ.selectWindow(sim_image_title)
-        sim_imp = IJ.getImage()
-
+        #Reset raw_imp and sim_imp so we can test to see if we have downloaded
+        # the relevant image later
+        raw_imp = None
+        sim_imp = None
+        log_window = None
         raw_image_measurements = {}
         sim_image_measurements = {}
         output_images = []
-        if do_channel_intensity_profiles:
+
+        if (do_channel_intensity_profiles and
+                 not ((raw_image_title.rsplit('.', 1)[0] + '_CIP.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
             output, measurement = channel_intensity_profiles(raw_image_title)
             raw_image_measurements.update(measurement)
+            log_window = True
             output_images += output
 
-        if do_fourier_projections:
+        if (do_fourier_projections and
+            not ((raw_image_title.rsplit('.', 1)[0] + '_FPJ.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
             output_images += fourier_projections(raw_image_title)
 
-        if do_motion_illumination_variation:
+        if (do_motion_illumination_variation and
+            not ((raw_image_title.rsplit('.', 1)[0] + '_MIV.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
             output_images += motion_illumination_variation(raw_image_title)
 
-        if do_modulation_contrast or do_modulation_contrast_map:
-            output, measurement = modulation_contrast(raw_image_title, sim_image_title, do_modulation_contrast_map)
+        if ((do_modulation_contrast or do_modulation_contrast_map) and
+            not ((raw_image_title.rsplit('.', 1)[0] + '_MCN.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
+            output, measurement = modulation_contrast(raw_image_title,
+                                                      sim_image_title,
+                                                      do_modulation_contrast_map)
             raw_image_measurements.update(measurement)
+            log_window = True
             output_images += output
 
         if do_intensity_histogram:
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
             measurement = intensity_histogram(sim_image_title)
+            log_window = True
             sim_image_measurements.update(measurement)
 
-        if do_fourier_plots:
+        if (do_fourier_plots and 
+            not ((sim_image_title.rsplit('.', 1)[0] + '_FTL.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
             output_images += fourier_plots(sim_image_title)
 
-        add_images_key_values(gateway, raw_image_measurements, raw_image_id,
+        if raw_image_measurements:
+            add_images_key_values(gateway, raw_image_measurements, raw_image_id,
                               group_id, "SIMcheck")
-        add_images_key_values(gateway, sim_image_measurements, sim_image_id,
+        if sim_image_measurements:
+            add_images_key_values(gateway, sim_image_measurements, sim_image_id,
                               group_id, "SIMcheck")
 
         for output_image in output_images:
@@ -208,10 +259,13 @@ def main_function():
             # Upload image to OMERO
             print('Success: ' + str(upload_image(gateway, image_path, omero_server, dataset_id)))
 
-        # Clean up
-        IJ.run("Close All")
-        IJ.selectWindow("Log")
-        IJ.run("Close")
+        # Clean up close widnows that have been opened 
+        if sim_imp or raw_imp:
+            IJ.run("Close All")
+        #close log window if it exists
+        if log_window:
+            IJ.selectWindow("Log")
+            IJ.run("Close")
 
     print("Done")
     return gateway.disconnect()
