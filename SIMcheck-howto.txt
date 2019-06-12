@@ -23,8 +23,7 @@ This needs to go into the Fiji jars directory.
 
 3) Install the OMERO_toolbox.py script.
 --------------------
-I installed this into the Fiji jars/Lib folder which is on the script
-path and didn't exist on my machine. I created it and copied the
+Create a new directory in Fiji jars directory called Lib and copy the
 python script there.
 
 4) Get the OMERO-SIMcheck.py
@@ -34,6 +33,11 @@ need to be able to open it from the Fiji file menu so maybe in your
 home directory or similar.
 
 5) Start Fiji
+
+5a) increase the memory avalibale to Fiji, Select the
+edit:options:memory and threads menu item and increase the maximum
+memory. I suggest at least 10,000 MB if possible, once you click ok,
+you have to restart Fiji for this to apply.
 
 6) open the script OMERO-SIMcheck.py from the Fiji file menu. It
 should open in the script editor.
