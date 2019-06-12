@@ -315,13 +315,13 @@ def main_function():
 #@string(value='_SIR.dv') sim_subfix
 
 #@boolean(label='Do channel intensity profiles', value=true, persist=true) do_channel_intensity_profiles
+#@boolean(label='Do motion and illumination variation', value=true, persist=true) do_motion_illumination_variation
 #@boolean(label='Do fourier projections', value=true, persist=true) do_fourier_projections
-#@boolean(label='Do motion illumination variation', value=true, persist=true) do_motion_illumination_variation
 #@boolean(label='Do modulation contrast', value=true, persist=true) do_modulation_contrast
-#@boolean(label='Do modulation contrast map', value=true, persist=true) do_modulation_contrast_map
-#@boolean(label='Do channel intensity histogram', value=true, persist=true) do_intensity_histogram
+#@boolean(label='Do reconstructed intensity histogram', value=true, persist=true) do_intensity_histogram
 #@boolean(label='Do spherical aberration mismatch', value=true, persist=true) do_spherical_aberration_mismatch
 #@boolean(label='Do fourier plots', value=true, persist=true) do_fourier_plots
+#@boolean(label='Do modulation contrast map', value=true, persist=true) do_modulation_contrast_map
 
 
 main_function()
