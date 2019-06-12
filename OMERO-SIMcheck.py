@@ -99,7 +99,19 @@ def intensity_histogram(image_title):
     statistics = {}
     statistics.update(parse_log('max-to-min intensity ratio = '))
 
-    return statistics
+    return  statistics
+
+def spherical_aberration_mismatch(image_title):
+    IJ.selectWindow(image_title)
+    IJ.run("Spherical Aberration Mismatch", " ")
+    IJ.selectWindow(image_title.rsplit('.', 1)[0] + '_SAM')
+    sam_imp = IJ.getImage()
+  
+    statistics = {}
+    statistics.update(parse_log('Z-minimum variation = '))
+
+    return [sam_imp],statistics
+
 
 
 def fourier_plots(image_title):
@@ -229,9 +241,25 @@ def main_function():
                 IJ.selectWindow(sim_image_title)
                 sim_imp = IJ.getImage()
             measurement = intensity_histogram(sim_image_title)
+            print ( measurement)
             log_window = True
             sim_image_measurements.update(measurement)
 
+        if (do_spherical_aberration_mismatch  and 
+            not ((sim_image_title.rsplit('.', 1)[0] + '_SAM.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
+            output, measurement = spherical_aberration_mismatch(sim_image_title)
+            log_window = True
+            print ( measurement)
+            output_images += output
+            sim_image_measurements.update(measurement)
+
+            
         if (do_fourier_plots and 
             not ((sim_image_title.rsplit('.', 1)[0] + '_FTL.ome.tiff') in
                       map(lambda x: x[0], images))):
@@ -292,6 +320,7 @@ def main_function():
 #@boolean(label='Do modulation contrast', value=true, persist=true) do_modulation_contrast
 #@boolean(label='Do modulation contrast map', value=true, persist=true) do_modulation_contrast_map
 #@boolean(label='Do channel intensity histogram', value=true, persist=true) do_intensity_histogram
+#@boolean(label='Do spherical aberration mismatch', value=true, persist=true) do_spherical_aberration_mismatch
 #@boolean(label='Do fourier plots', value=true, persist=true) do_fourier_plots
 
 
