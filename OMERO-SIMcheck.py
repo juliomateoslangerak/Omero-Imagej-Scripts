@@ -1,5 +1,8 @@
 from operator import itemgetter
-from os import path
+import os
+from java.lang.reflect import Array
+from java.lang import String
+
 
 from OMERO_toolbox import open_image_plus
 from OMERO_toolbox import omero_connect
@@ -96,7 +99,19 @@ def intensity_histogram(image_title):
     statistics = {}
     statistics.update(parse_log('max-to-min intensity ratio = '))
 
-    return statistics
+    return  statistics
+
+def spherical_aberration_mismatch(image_title):
+    IJ.selectWindow(image_title)
+    IJ.run("Spherical Aberration Mismatch", " ")
+    IJ.selectWindow(image_title.rsplit('.', 1)[0] + '_SAM')
+    sam_imp = IJ.getImage()
+  
+    statistics = {}
+    statistics.update(parse_log('Z-minimum variation = '))
+
+    return [sam_imp],statistics
+
 
 
 def fourier_plots(image_title):
@@ -105,122 +120,191 @@ def fourier_plots(image_title):
 
     IJ.selectWindow(image_title.rsplit('.', 1)[0] + '_FTL')
     ftl_imp = IJ.getImage()
-    IJ.run("To ROI Manager")
+    
+    # IJ.run("To ROI Manager")
+    # TODO: add ROIs to fourier plots
 
     IJ.selectWindow(image_title.rsplit('.', 1)[0] + '_FTR')
+    # TODO: convert to RGB
     ftr_imp = IJ.getImage()
 
     return [ftl_imp, ftr_imp]
 
 
 def main_function():
+    # Clean up
+    IJ.run("Close All")
+    # TODO: condition closing or reseting log window to the fact that it is open
+    # IJ.selectWindow("Log")
+    # IJ.run("Close")
 
     # Connect to OMERO
     gateway = omero_connect(omero_server, omero_port, user_name, user_pw)
 
     # Get Images IDs and names
-    images_dict = get_image_properties(gateway, dataset_id)
+    images_dict = get_image_properties(gateway, dataset_id, group_id)
 
-    images = [(name, images_dict[name]) for name in images_dict]
+    images = [(images_dict[id]['name'], id) for id in images_dict]
 
     # Sort and get image names
     images.sort(key=itemgetter(0))
-
+    
     # We are assuming here a standard OMX naming pattern for raw and sim images
-    sim_image_names = [i[0] for i in images if i[0].endswith(sim_subfix)]
-    raw_image_names = [i.rstrip(sim_subfix) + raw_subfix  for i in sim_image_names]
+    sim_images = [i[0] for i in images if i[0].endswith(sim_subfix)]
+    raw_images = [i.rstrip(sim_subfix) + raw_subfix for i in sim_images]
+    sim_images_ids = [i for i in images if i[0] in sim_images]
+    raw_images_ids = [i for i in images if i[0] in raw_images]
 
-    image_sets_to_analize = []
-
-    for i in range(len(sim_image_names)):
-        try:
-            image_sets_to_analize.append((raw_image_names[i],
-                                          images_dict[raw_image_names[i]],
-                                          sim_image_names[i],
-                                          images_dict[sim_image_names[i]]))
-        except KeyError:
-            print("Some of the images do not have a raw-sim correspondance")
-            gateway.disconnect()
-            print("Script has been aborted")
-            return
-
+    if len(sim_images_ids) != len(raw_images_ids):
+        print("Some of the images do not have a raw-sim correspondance")
+        gateway.disconnect()
+        print("Script has been aborted")
+        return
 
     # Iterate through the list of images to analyze
-    for image_set in image_sets_to_analize:
+    for i in range(len(sim_images_ids)):
+        raw_image_title = raw_images_ids[i][0]
+        raw_image_id = raw_images_ids[i][1]
+        sim_image_title = sim_images_ids[i][0]
+        sim_image_id = sim_images_ids[i][1]
 
-        raw_image_title = image_set[0]
-        raw_image_id = image_set[1]
-        sim_image_title = image_set[2]
-        sim_image_id = image_set[3]
+        print("Analyzing RAW image: " + raw_image_title + " with id: " + str(raw_image_id))
+        print("Analyzing SIM image: " + sim_image_title + " with id: " + str(sim_image_id))
 
-        print("Analyzing RAW image: " + raw_image_title)
-        print("Analyzing SIM image: " + sim_image_title)
-
-        # open the raw and sim images
-        open_image_plus(omero_server,user_name,user_pw,group_id,raw_image_id)
-        IJ.selectWindow(raw_image_title)
-        raw_imp = IJ.getImage()
-        open_image_plus(omero_server,user_name,user_pw,group_id,sim_image_id)
-        IJ.selectWindow(sim_image_title)
-        sim_imp = IJ.getImage()
-
+        #Reset raw_imp and sim_imp so we can test to see if we have downloaded
+        # the relevant image later
+        raw_imp = None
+        sim_imp = None
+        log_window = None
         raw_image_measurements = {}
         sim_image_measurements = {}
         output_images = []
-        if do_channel_intensity_profiles:
+
+        if (do_channel_intensity_profiles and
+                 not ((raw_image_title.rsplit('.', 1)[0] + '_CIP.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
             output, measurement = channel_intensity_profiles(raw_image_title)
             raw_image_measurements.update(measurement)
+            log_window = True
             output_images += output
 
-        if do_fourier_projections:
+        if (do_fourier_projections and
+            not ((raw_image_title.rsplit('.', 1)[0] + '_FPJ.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
             output_images += fourier_projections(raw_image_title)
 
-        if do_motion_illumination_variation:
+        if (do_motion_illumination_variation and
+            not ((raw_image_title.rsplit('.', 1)[0] + '_MIV.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
             output_images += motion_illumination_variation(raw_image_title)
 
-        if do_modulation_contrast or do_modulation_contrast_map:
-            output, measurement = modulation_contrast(raw_image_title, sim_image_title, do_modulation_contrast_map)
+        if ((do_modulation_contrast or do_modulation_contrast_map) and
+            not ((raw_image_title.rsplit('.', 1)[0] + '_MCN.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if raw_imp is None :
+                open_image_plus(omero_server,user_name,user_pw,
+                                group_id,raw_image_id)
+                IJ.selectWindow(raw_image_title)
+                raw_imp = IJ.getImage()
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
+            output, measurement = modulation_contrast(raw_image_title,
+                                                      sim_image_title,
+                                                      do_modulation_contrast_map)
             raw_image_measurements.update(measurement)
+            log_window = True
             output_images += output
 
         if do_intensity_histogram:
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
             measurement = intensity_histogram(sim_image_title)
+            print ( measurement)
+            log_window = True
             sim_image_measurements.update(measurement)
 
-        if do_fourier_plots:
+        if (do_spherical_aberration_mismatch  and 
+            not ((sim_image_title.rsplit('.', 1)[0] + '_SAM.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
+            output, measurement = spherical_aberration_mismatch(sim_image_title)
+            log_window = True
+            print ( measurement)
+            output_images += output
+            sim_image_measurements.update(measurement)
+
+            
+        if (do_fourier_plots and 
+            not ((sim_image_title.rsplit('.', 1)[0] + '_FTL.ome.tiff') in
+                      map(lambda x: x[0], images))):
+            if sim_imp is None :
+                open_image_plus(omero_server,user_name,
+                                user_pw,group_id,sim_image_id)
+                IJ.selectWindow(sim_image_title)
+                sim_imp = IJ.getImage()
             output_images += fourier_plots(sim_image_title)
 
-        add_images_key_values(gateway, raw_image_measurements, raw_image_id, "SIMcheck")
-        add_images_key_values(gateway, sim_image_measurements, sim_image_id, "SIMcheck")
+        if raw_image_measurements:
+            add_images_key_values(gateway, raw_image_measurements, raw_image_id,
+                              group_id, "SIMcheck")
+        if sim_image_measurements:
+            add_images_key_values(gateway, sim_image_measurements, sim_image_id,
+                              group_id, "SIMcheck")
 
         for output_image in output_images:
-
-            image_path = path.join(temp_path, (output_image.getTitle() + '.ome.tiff'))
+        
+            image_title = output_image.getTitle() + ".ome.tiff"
+            image_path = os.path.join(str(temp_path), image_title)
             IJ.run(output_image, 'Bio-Formats Exporter', 'save=' + image_path + ' export compression=Uncompressed')
             output_image.changes = False
             output_image.close()
             # Upload image to OMERO
-            str2d = java.lang.reflect.Array.newInstance(java.lang.String,[1])
-            str2d [0] = image_path
-            print('Importing image: ' + output_image.getTitle())
-            success = upload_image(gateway, str2d, omero_server, dataset_id)
-            print('Success: ' + str(success))
+            print('Success: ' + str(upload_image(gateway, image_path, omero_server, dataset_id)))
 
-        # Clean up
-        IJ.run("Close All")
-        IJ.selectWindow("Log")
-        IJ.run("Close")
+        # Clean up close widnows that have been opened 
+        if sim_imp or raw_imp:
+            IJ.run("Close All")
+        #close log window if it exists
+        if log_window:
+            IJ.selectWindow("Log")
+            IJ.run("Close")
 
     print("Done")
     return gateway.disconnect()
 
 # get OMERO credentials
 #@string(label="Server", value="omero.mri.cnrs.fr", persist=true) omero_server
-#@int(label="Port", value="4064", persist=true) omero_port
+#@int(label="Port", value=4064, persist=true) omero_port
 #@string(label="Username", persist=true) user_name
 #@string(label="Password", persist=false) user_pw
 
-# get teh path for a temporary directory to store files
+# get the path for a temporary directory to store files
 #@File(label="Select a temporary directory", style="directory") temp_path
 
 # get Dataset id
@@ -230,13 +314,14 @@ def main_function():
 #@string(value='.dv') raw_subfix
 #@string(value='_SIR.dv') sim_subfix
 
-#@boolean(label='Do channel intensity profiles', value=true) do_channel_intensity_profiles
-#@boolean(label='Do fourier projections', value=true) do_fourier_projections
-#@boolean(label='Do motion illumination variation', value=true) do_motion_illumination_variation
-#@boolean(label='Do modulation contrast', value=true) do_modulation_contrast
-#@boolean(label='Do modulation contrast map', value=true) do_modulation_contrast_map
-#@boolean(label='Do channel intensity histogram', value=true) do_intensity_histogram
-#@boolean(label='Do fourier plots', value=true) do_fourier_plots
+#@boolean(label='Do channel intensity profiles', value=true, persist=true) do_channel_intensity_profiles
+#@boolean(label='Do motion and illumination variation', value=true, persist=true) do_motion_illumination_variation
+#@boolean(label='Do fourier projections', value=true, persist=true) do_fourier_projections
+#@boolean(label='Do modulation contrast', value=true, persist=true) do_modulation_contrast
+#@boolean(label='Do reconstructed intensity histogram', value=true, persist=true) do_intensity_histogram
+#@boolean(label='Do spherical aberration mismatch', value=true, persist=true) do_spherical_aberration_mismatch
+#@boolean(label='Do fourier plots', value=true, persist=true) do_fourier_plots
+#@boolean(label='Do modulation contrast map', value=true, persist=true) do_modulation_contrast_map
 
 
 main_function()

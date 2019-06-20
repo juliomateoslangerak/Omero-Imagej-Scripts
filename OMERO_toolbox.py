@@ -91,10 +91,10 @@ def omero_connect(host, port, user_name, user_password):
     return gateway
 
 
-def _get_images_browser(gateway, dataset_id):
+def _get_images_browser(gateway, dataset_id, group_id):
     browse = gateway.getFacility(BrowseFacility)
     user = gateway.getLoggedInUser()
-    ctx = SecurityContext(user.getGroupId())
+    ctx = SecurityContext(group_id)
     ids = ArrayList(1)
     val = Long(dataset_id)
     ids.add(val)
@@ -110,10 +110,19 @@ def get_image_ids(gateway, dataset_id):
     return image_ids
 
 
-def get_image_properties(gateway, dataset_id):
-    """Returns a dictionary with image Name: image ID under a Project/Dataset"""
+def get_image_properties(gateway, dataset_id, group_id):
+    """Returns a dictionary of dictionaries in the form:
+    {long:{'name': str,
+           'acquisition_date': ,
+           'description': str,
+           'fileset_id': ,
+           'index': ,
+           'instrument_id': ,
+           'file_path': str,}
+    under the specified Dataset
+    """
 
-    browser = _get_images_browser(gateway, dataset_id)
+    browser = _get_images_browser(gateway, dataset_id, group_id)
     image_properties = {}
     for image in browser:
         image_id = image.getId()
@@ -134,7 +143,10 @@ def upload_image(gateway, path, host, dataset_id):
     user = gateway.getLoggedInUser()
     ctx = SecurityContext(user.getGroupId())
     session_key = gateway.getSessionId(user)
-
+    
+    str2d = Array.newInstance(String,[1])
+    str2d[0] = path
+    
     config = ImportConfig()
 
     config.email.set("")
@@ -156,16 +168,17 @@ def upload_image(gateway, path, host, dataset_id):
     error_handler = ErrorHandler(config)
 
     library.addObserver(LoggingImportMonitor())
-    candidates = ImportCandidates (reader, path, error_handler)
+    candidates = ImportCandidates(reader, str2d, error_handler)
     reader.setMetadataOptions(DefaultMetadataOptions(MetadataLevel.ALL))
+    print('Importing image: ' + str2d[0])
     success = library.importCandidates(config, candidates)
     return success
 
 
-def _data_manager_generator(gateway):
+def _data_manager_generator(gateway, group_id):
     data_manager = gateway.getFacility(DataManagerFacility)
     user = gateway.getLoggedInUser()
-    ctx = SecurityContext(user.getGroupId())
+    ctx = SecurityContext(group_id)
 
     return data_manager, ctx
 
@@ -183,11 +196,11 @@ def _dict_to_map_annotation(dictionary, description=None):
     return map_data
 
 
-def add_projects_key_values(gateway, key_values, project_ids, description=None):
+def add_projects_key_values(gateway, key_values, project_ids, group_id, description=None):
     """Adds some key:value pairs to a list of images"""
     map_data = _dict_to_map_annotation(key_values, description)
 
-    data_manager, ctx = _data_manager_generator(gateway)
+    data_manager, ctx = _data_manager_generator(gateway, group_id)
 
     # Link the data to the image
     if not hasattr(project_ids, '__iter__'):
@@ -199,11 +212,11 @@ def add_projects_key_values(gateway, key_values, project_ids, description=None):
         data_manager.saveAndReturnObject(ctx, link)
 
 
-def add_datasets_key_values(gateway, key_values, dataset_ids, description=None):
+def add_datasets_key_values(gateway, key_values, dataset_ids, group_id, description=None):
     """Adds some key:value pairs to a list of images"""
     map_data = _dict_to_map_annotation(key_values, description)
 
-    data_manager, ctx = _data_manager_generator(gateway)
+    data_manager, ctx = _data_manager_generator(gateway, group_id)
 
     # Link the data to the image
     if not hasattr(dataset_ids, '__iter__'):
@@ -215,11 +228,11 @@ def add_datasets_key_values(gateway, key_values, dataset_ids, description=None):
         data_manager.saveAndReturnObject(ctx, link)
 
 
-def add_images_key_values(gateway, key_values, image_ids, description=None):
+def add_images_key_values(gateway, key_values, image_ids, group_id, description=None):
     """Adds some key:value pairs to a list of images"""
     map_data = _dict_to_map_annotation(key_values, description)
 
-    data_manager, ctx = _data_manager_generator(gateway)
+    data_manager, ctx = _data_manager_generator(gateway, group_id)
 
     # Link the data to the image
     if not hasattr(image_ids, '__iter__'):
