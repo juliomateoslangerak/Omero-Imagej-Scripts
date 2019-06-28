@@ -302,7 +302,7 @@ def main_function():
 #@string(label="Server", value="omero.mri.cnrs.fr", persist=true) omero_server
 #@int(label="Port", value=4064, persist=true) omero_port
 #@string(label="Username", persist=true) user_name
-#@string(label="Password", persist=false) user_pw
+#@string(label="Password", style=password, persist=false) user_pw
 
 # get the path for a temporary directory to store files
 #@File(label="Select a temporary directory", style="directory") temp_path
