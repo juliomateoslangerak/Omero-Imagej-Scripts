@@ -6,7 +6,7 @@ All the files mentioned below are on
 OMERO Fiji plugin comes from the OMERO site. The scripts are on
 GitHub. My versions are at 
 
-https://github.com/iandobbie/Omero-Imagej-Scripts/tree/test-file-existance
+https://github.com/iandobbie/Omero-Imagej-Scripts/tree/SIMcheck-howto-update
 
 Clone in git or if you don't know how to do that, go the the green
 clone or download button and download a zip file. 
