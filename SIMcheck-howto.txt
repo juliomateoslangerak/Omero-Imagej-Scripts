@@ -3,13 +3,13 @@ Quick guide into how I setup the OMERO SIMcheck scripts.
 
 All the files mentioned below are on
 
-Omero fiji plugin comes from the omero site. The scripts are on
-github. My versions are at 
+OMERO Fiji plugin comes from the OMERO site. The scripts are on
+GitHub. My versions are at 
 
-https://github.com/iandobbie/Omero-Imagej-Scripts/tree/test-file-existance
+https://github.com/iandobbie/Omero-Imagej-Scripts/tree/SIMcheck-howto-update
 
-Clone in git or if you don't know hopw to do that, go the the green
-clone ordownload button and download a zip file. 
+Clone in git or if you don't know how to do that, go the the green
+clone or download button and download a zip file. 
 
 
 1) Install the OMERO IJ plugin
@@ -24,7 +24,7 @@ This needs to go into the Fiji jars directory.
 3) Install the OMERO_toolbox.py script.
 --------------------
 Create a new directory in Fiji jars directory called Lib and copy the
-python script there.
+OMERO_toolbox.py python script there.
 
 4) Get the OMERO-SIMcheck.py
 --------------------
@@ -34,7 +34,7 @@ home directory or similar.
 
 5) Start Fiji
 
-5a) increase the memory avalibale to Fiji, Select the
+5a) increase the memory available to Fiji, Select the
 edit:options:memory and threads menu item and increase the maximum
 memory. I suggest at least 10,000 MB if possible, once you click ok,
 you have to restart Fiji for this to apply.
@@ -49,9 +49,12 @@ run button is in the bottom left corner of the script editor window
 8)Fill in dialog
 --------------------
 Server: omero1.bioch.ox.ac.uk (or your server name)
-Port: 4064
+Port: 4064 (this is the default and what it uses but for some reason
+it displays 0)
+
 username/password for your OMERO account - mind out it does not blank
-your password!
+your password! (We know this is a major drawback and are trying to
+solve this. 
 
 you must create and point to a temporary directory for the data to be
 downloaded to and processed in.
@@ -60,7 +63,7 @@ Dataset ID can be got from the OMERO webclient by selecting the
 dataset you want to process and looking at the top of the right hand
 panel for the Dataset ID my test dataset is 19727
 
-GroupID is the a number you need to know, and rarther awkward to get:
+GroupID is the a number you need to know, and rather awkward to get:
 a) go to the web interface
 b) click on your name, move down to the group you want to select and
 then hover over a name in that group. If you look at the link it have
